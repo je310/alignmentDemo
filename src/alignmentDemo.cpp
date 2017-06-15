@@ -16,10 +16,6 @@
 
 float findTransform(std::vector<std::pair<cv::Mat, cv::Mat>> CP, cv::Mat &R,
                     cv::Mat &t);
-float findDistance(cv::Mat one, cv::Mat two);
-cv::Mat vecToMat(tf::Vector3 in);
-tf::Vector3 MatToVec(cv::Mat in);
-tf::Quaternion averageQuat(tf::Quaternion acc, tf::Quaternion add);
 cv::Mat MarkerArr[4];
 
 
@@ -45,9 +41,6 @@ void sendTransforms(Mocha::Frame::KPtr frame) { // This function is triggered
   static cv::Mat R;
   static cv::Mat t;
 
-
-  // std::cout<<"id "<<frame->getFrameNumber()<<" Latency:
-  // "<<frame->getLatency()<<std::endl; // Information about the frame
   for (auto &name : frame->listRigidBodiesNames()) // For loop over all the
                                                    // bodies contained in the
                                                    // frame
@@ -59,19 +52,14 @@ void sendTransforms(Mocha::Frame::KPtr frame) { // This function is triggered
       continue;
     }
 
-    // std::cout<<"Name: "<<name<< "   X: "<<pos.x<< "   Y: "<<pos.y<< "   Z:
-    // "<<pos.z;  //global position of the rigid body
-    // std::cout<<"   I: "<<orient.i<<"   J: "<<orient.j<<"   K: "<<orient.k<<"
-    // W: "<<orient.w<<std::endl;
+
 
     tf::Transform transform;
     transform.setOrigin(tf::Vector3(pos.x, -pos.z, pos.y));
 
     tf::Quaternion q(orient.i, -orient.k, orient.j, -1.0 * orient.w);
     q = q.inverse();
-    // tf::Quaternion q(1.0*orient.i, orient.j, orient.k, 1.0*orient.w);
-    // std::cout << "rot1:" << q.getX() << " " << q.getY() << " " << q.getZ() <<
-    // " " << q.getW() << std::endl;
+
     transform.setRotation(q);
     if(lastTransforms.find(name) != lastTransforms.end()) {
         if(lastTransforms.at(name) != transform) {
@@ -104,6 +92,8 @@ void sendTransforms(Mocha::Frame::KPtr frame) { // This function is triggered
           thisPair.second = thisMarker;
           thisPair.first = MarkerArr[number];
           correspondingPoints.push_back(thisPair);
+
+          //uncommnet this if you need to reorder the MarkerArr if a new rigid body is used.
 //          std::cout <<"ball number:"<< number<< "x:"<< posMarker.x << "y:"<<
 //          posMarker.y<< "z:"<< posMarker.z<< std::endl;
 
@@ -142,6 +132,8 @@ int main(int argc, char **argv) {
 
 
 
+    // calibrated values taken from the model. They should not need to change unless the balls are moved on the glasse.
+    // the ordering in which they are assigned to the MarkerArr may need to change if you make a new rigid body.
   cv::Mat bot =
       (cv::Mat_<float>(3, 1) << -305.55, 363.83,1022.14);
   cv::Mat front =
@@ -215,34 +207,7 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-tf::Quaternion averageQuat(tf::Quaternion acc, tf::Quaternion add) {
-  float x = 0.9 * acc.x() + 0.1 * add.x();
-  float y = 0.9 * acc.y() + 0.1 * add.y();
-  float z = 0.9 * acc.z() + 0.1 * add.z();
-  float w = 0.9 * acc.w() + 0.1 * add.w();
-  tf::Quaternion ret = tf::Quaternion(x, y, z, w);
-  return ret;
-}
-
-cv::Mat vecToMat(tf::Vector3 in) {
-  cv::Mat ret = (cv::Mat_<float>(3, 1) << in.x(), in.y(), in.z());
-  return ret;
-}
-tf::Vector3 MatToVec(cv::Mat in) {
-  tf::Vector3 ret(in.at<float>(0), in.at<float>(1), in.at<float>(2));
-  return ret;
-}
-
-float findDistance(cv::Mat one, cv::Mat two) {
-  float ans = 0;
-  if (one.rows != 0 && two.rows != 0) {
-    ans = sqrt(pow(one.at<float>(0, 0) - two.at<float>(0, 0), 2) +
-               pow(one.at<float>(1, 0) - two.at<float>(1, 0), 2) +
-               pow(one.at<float>(2, 0) - two.at<float>(2, 0), 2));
-  }
-  return ans;
-}
-
+// function borrowed from http://nghiaho.com/?page_id=671
 float findTransform(std::vector<std::pair<cv::Mat, cv::Mat>> CP, cv::Mat &R,
                     cv::Mat &t) {
   cv::Mat ac = cv::Mat(3, 1, CV_32F, cv::Scalar(0));
