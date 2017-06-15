@@ -1,0 +1,17 @@
+<robot name="your_robot_name">
+  <link name="glassesOut">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="file:///home/josh/catkin_ws/src/alignmentDemo/fancyGlasses.stl"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="file:///home/josh/catkin_ws/src/alignmentDemo/fancyGlasses.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+
+</robot>
